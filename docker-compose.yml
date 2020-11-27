@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: remotefs
+    env_file: .env
+    ports:
+      - 38000:8000

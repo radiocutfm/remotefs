@@ -1,0 +1,4 @@
+container: remotefs
+container_shell: bash
+registry: ""
+image: gnarvaja/remotefs

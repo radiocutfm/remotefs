@@ -1,0 +1,6 @@
+[run]
+branch = True
+
+omit = 
+    app/tasks.py
+    app/gunicorn.py

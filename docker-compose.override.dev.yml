@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  server:
+    command: ["sh", "-c", "while [ 0 ]; do date; sleep 30 ; done"]
+    build:
+      args:
+        DEV_ENV: "1"
+    ports:
+      - 35000:5000
+      - 34444:4444
+    volumes:
+      - ./:/usr/local/app/
+      - ./files/:/files/
+#      - ../m9g/src/m9g/:/usr/local/lib/python3.9/site-packages/m9g/
