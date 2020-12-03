@@ -15,8 +15,12 @@ application = app
 
 env = Env()
 
-BUCKETS = env.list("BUCKETS")
-BUCKETS = dict(x.split(":") for x in BUCKETS)
+if "BUCKETS" not in app.config:
+    BUCKETS = env.list("BUCKETS")
+    BUCKETS = dict(x.split(":") for x in BUCKETS)
+    app.config["BUCKETS"] = BUCKETS
+else:
+    BUCKETS = app.config["BUCKETS"]
 
 UTC = zoneinfo.ZoneInfo("UTC")
 
@@ -33,13 +37,11 @@ class BaseManager:
 
         path = path.lstrip("/")
 
-        global BUCKETS
-
-        if bucket not in BUCKETS:
+        if bucket not in app.config["BUCKETS"]:
             app.logger.warning(f"Bucket {bucket} not found!")
             abort(404, f"Bucket {bucket} not found!")
 
-        return os.path.join(BUCKETS[bucket], path)
+        return os.path.join(app.config["BUCKETS"][bucket], path)
 
     def findByPrimaryKey(self, pk):
         bucket, path = pk
@@ -96,8 +98,12 @@ class FileManager(BaseManager):
         )
 
 
-Directory.manager = DirectoryManager()
-File.manager = FileManager()
+def set_managers():
+    Directory.manager = DirectoryManager()
+    File.manager = FileManager()
+
+
+set_managers()
 
 
 def _model_response(obj):

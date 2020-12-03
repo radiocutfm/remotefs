@@ -19,6 +19,7 @@ class ServerTests(TestCase):
         super().setUp()
         server.app.config['TESTING'] = True
         self.client = server.app.test_client(use_cookies=False)
+        server.set_managers()
 
     def test_get_directory(self):
         tempdir = tempfile.mkdtemp()
@@ -29,7 +30,7 @@ class ServerTests(TestCase):
         os.mkdir(os.path.join(tempdir, "foodir"))
         open(os.path.join(tempdir, "foodir/foo3"), "wt").write("bar3")
 
-        with patch.dict(server.BUCKETS, {"temp": tempdir}):
+        with patch.dict(server.app.config["BUCKETS"], {"temp": tempdir}):
             resp = self.client.get(f"/temp/directory/-root-/")
             json_resp = resp.get_data()
 
@@ -65,6 +66,6 @@ class ServerTests(TestCase):
             assert resp.status == "404 NOT FOUND"
 
     def test_bucket_not_found(self):
-        resp = self.client.get(f"/temp/directory/-root-/")
+        resp = self.client.get(f"/temp2/directory/-root-/")
         assert resp.status == "404 NOT FOUND"
-        assert b"Bucket temp not found" in resp.get_data()
+        assert b"Bucket temp2 not found" in resp.get_data()
