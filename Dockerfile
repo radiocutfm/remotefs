@@ -10,15 +10,14 @@ RUN apt-get install -y tzdata
 RUN pip install --no-cache-dir Flask \
                                gunicorn[gevent] \
                                requests \
+                               m9g \
+                               chardet \
                                environs
-
-RUN pip install --no-cache-dir m9g
-RUN pip install --no-cache-dir future_fstrings  # remove when fixed in m9g
 
 # Installs some utils for debugging
 ARG DEV_ENV="0"
 RUN if [ $DEV_ENV -ne 0 ]; then pip install ipdb rpdb colorama pytest pytest-cov responses; fi
-
+ENV M9G_VALIDATE_TYPES=T
 ENV BUCKETS "bucket1:/dir1,bucket2:/dir2"
 ENV DEV_ENV $DEV_ENV
 

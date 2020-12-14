@@ -17,13 +17,11 @@ class LiveServerTests(TestCase):
 
     def setUp(self):
         self.flask_port = random.randint(3000, 9999)
-        self.tempdir = tempfile.mkdtemp()
-        self.addCleanup(lambda: shutil.rmtree(self.tempdir))
         self.flask = subprocess.Popen(
             self.flask_command.format(**locals()).split(),
             stdout=subprocess.DEVNULL,
             env={
-                "BUCKETS": f"temp:{self.tempdir}",
+                "BUCKETS": self.buckets,
                 "FLASK_APP": f"app/server.py",
             },
         )
@@ -64,6 +62,34 @@ class LiveServerTests(TestCase):
     def server_url(self):
         return f"http://localhost:{self.flask_port}"
 
+
+class SampleFilesLiveServerTests(LiveServerTests):
+    buckets = "samples:/usr/local/app/tests/files"
+
+    def test_samplefiles(self):
+        resp = requests.get(f"{self.server_url}/samples/directory/-root-/")
+        assert resp.ok
+        directory = fsmodel.Directory.deserialize_jsondict(resp.json())
+
+        assert len(directory.files) == 3
+        assert len(directory.subdirs) == 0
+
+        directory.files.sort(key=lambda f: f.path)
+        assert ["/preambulo.txt", "/radio_cut_64.png", "/radiocut-app-640x360.mp4"] == [
+            f.path for f in directory.files
+        ]
+        assert isinstance(directory.files[0], fsmodel.TextFile)
+        assert isinstance(directory.files[1], fsmodel.ImageFile)
+        assert isinstance(directory.files[2], fsmodel.VideoFile)
+
+
+class TempLiveServerTests(LiveServerTests):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.addCleanup(lambda: shutil.rmtree(self.tempdir))
+        self.buckets = f"temp:{self.tempdir}"
+        super().setUp()
+
     def test_get_directory(self):
         open(os.path.join(self.tempdir, "foo"), "wt").write("bar")
         open(os.path.join(self.tempdir, "foo2"), "wt").write("bar2")
@@ -72,7 +98,7 @@ class LiveServerTests(TestCase):
 
         resp = requests.get(f"{self.server_url}/temp/directory/-root-/")
         assert resp.ok
-        directory = fsmodel.Directory.deserialize_json(resp.content)
+        directory = fsmodel.Directory.deserialize_jsondict(resp.json())
 
         assert len(directory.files) == 2
         assert len(directory.subdirs) == 1
